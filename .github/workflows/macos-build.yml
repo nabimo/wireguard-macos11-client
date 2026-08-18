@@ -1,0 +1,19 @@
+name: macOS Build Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: macos-13
+
+    steps:
+      - name: Show Xcode versions
+        run: |
+          xcodebuild -version
+          xcode-select -p
+          xcrun --sdk macosx --show-sdk-version
+          swift --version
+
+      - name: Show macOS version
+        run: sw_vers
