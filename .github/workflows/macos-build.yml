@@ -1,14 +1,14 @@
-name: WireGuard macOS Build Test
+name: WireGuard Inspect Config
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  inspect:
     runs-on: macos-15-intel
 
     steps:
-      - name: Checkout app
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Go
@@ -22,53 +22,32 @@ jobs:
             https://git.zx2c4.com/wireguard-apple \
             wireguard-apple
 
-      - name: Show environment
-        run: |
-          sw_vers
-          uname -m
-          xcodebuild -version
-          xcrun --sdk macosx --show-sdk-version
-          swift --version
-          go version
-
-      - name: Build WireGuard macOS
+      - name: Inspect xcconfig
         working-directory: wireguard-apple
         run: |
-          xcodebuild \
-            -project WireGuard.xcodeproj \
-            -scheme WireGuardmacOS \
-            -configuration Release \
-            -sdk macosx \
-            -arch x86_64 \
-            MACOSX_DEPLOYMENT_TARGET=10.14 \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            build
+          echo "===== Config.xcconfig ====="
+          cat Sources/WireGuardApp/Config/Config.xcconfig
 
-      - name: Build Network Extension
+          echo
+          echo "===== Config directory ====="
+          find Sources/WireGuardApp/Config -maxdepth 2 -type f -print | sort
+
+          echo
+          echo "===== Developer.xcconfig references ====="
+          grep -R "Developer.xcconfig" . --exclude-dir=.git || true
+
+      - name: Inspect project config references
         working-directory: wireguard-apple
         run: |
-          xcodebuild \
-            -project WireGuard.xcodeproj \
-            -scheme WireGuardNetworkExtensionmacOS \
-            -configuration Release \
-            -sdk macosx \
-            -arch x86_64 \
-            MACOSX_DEPLOYMENT_TARGET=10.14 \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            build
+          echo "===== XCConfig references ====="
+          grep -R "\.xcconfig" WireGuard.xcodeproj/project.pbxproj \
+            Sources \
+            --exclude-dir=.git || true
 
-      - name: Build Go Bridge
+      - name: Inspect README developer instructions
         working-directory: wireguard-apple
         run: |
-          xcodebuild \
-            -project WireGuard.xcodeproj \
-            -scheme WireGuardGoBridgemacOS \
-            -configuration Release \
-            -sdk macosx \
-            -arch x86_64 \
-            MACOSX_DEPLOYMENT_TARGET=10.14 \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            build
+          echo "===== README ====="
+          grep -ni -C 5 \
+            -E "Developer.xcconfig|developer.xcconfig|xcconfig|Xcode|build" \
+            README.md || true
