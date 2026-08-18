@@ -21,15 +21,17 @@ jobs:
           git clone --branch 1.0.15-26 --depth 1 \
             https://git.zx2c4.com/wireguard-apple \
             wireguard-apple
+
       - name: Create Developer.xcconfig
         working-directory: wireguard-apple
         run: |
-          cp Sources/WireGuardApp/Config/Developer.xcconfig.template \
-          Sources/WireGuardApp/Config/Developer.xcconfig
-
           cat > Sources/WireGuardApp/Config/Developer.xcconfig <<'EOF'
-          DEVELOPMENT_TEAM =
-          CODE_SIGN_IDENTITY =
+          // Developer.xcconfig
+
+          DEVELOPMENT_TEAM = ABCDE12345
+
+          APP_ID_IOS = com.nabimo.wireguard.ios
+          APP_ID_MACOS = com.nabimo.wireguard.macos
           EOF
 
       - name: Inspect xcconfig
@@ -73,3 +75,17 @@ jobs:
           Sources/WireGuardApp/Config/Developer.xcconfig
 
           cat Sources/WireGuardApp/Config/Developer.xcconfig
+
+      - name: Build WireGuard
+        working-directory: wireguard-apple
+        run: |
+          xcodebuild \
+            -project WireGuard.xcodeproj \
+            -scheme WireGuardmacOS \
+            -configuration Release \
+            -sdk macosx \
+            -arch x86_64 \
+            MACOSX_DEPLOYMENT_TARGET=10.14 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
