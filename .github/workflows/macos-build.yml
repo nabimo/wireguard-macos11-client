@@ -1,4 +1,4 @@
-name: macOS Build Environment
+name: macOS Native Build
 
 on:
   workflow_dispatch:
@@ -8,12 +8,24 @@ jobs:
     runs-on: macos-13
 
     steps:
-      - name: Show Xcode versions
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show macOS
+        run: |
+          sw_vers
+          uname -m
+
+      - name: Show Xcode
         run: |
           xcodebuild -version
           xcode-select -p
           xcrun --sdk macosx --show-sdk-version
+
+      - name: Show Swift
+        run: |
           swift --version
 
-      - name: Show macOS version
-        run: sw_vers
+      - name: Show Go
+        run: |
+          go version || true
