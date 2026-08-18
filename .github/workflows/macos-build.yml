@@ -1,14 +1,14 @@
-name: macOS Native Build
+name: WireGuard macOS Compatibility
 
 on:
   workflow_dispatch:
 
 jobs:
-  inspect:
+  wireguard:
     runs-on: macos-15-intel
 
     steps:
-      - name: Checkout
+      - name: Checkout app
         uses: actions/checkout@v4
 
       - name: Show environment
@@ -24,5 +24,24 @@ jobs:
         with:
           go-version: '1.23'
 
-      - name: Show Go
-        run: go version
+      - name: Clone WireGuard Apple
+        run: |
+          git clone --branch 1.0.15-26 --depth 1 \
+            https://git.zx2c4.com/wireguard-apple \
+            wireguard-apple
+
+      - name: Inspect WireGuard Apple
+        run: |
+          cd wireguard-apple
+          git describe --tags --always
+          find . -maxdepth 2 -type f | sort | head -100
+
+      - name: Show Xcode projects
+        run: |
+          cd wireguard-apple
+          find . -name "*.xcodeproj" -o -name "*.xcworkspace"
+
+      - name: Show package manifests
+        run: |
+          cd wireguard-apple
+          find . -name "Package.swift" -print
