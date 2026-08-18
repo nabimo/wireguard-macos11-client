@@ -1,10 +1,10 @@
-name: WireGuard macOS Compatibility
+name: WireGuard macOS Build Test
 
 on:
   workflow_dispatch:
 
 jobs:
-  inspect:
+  build:
     runs-on: macos-15-intel
 
     steps:
@@ -22,56 +22,53 @@ jobs:
             https://git.zx2c4.com/wireguard-apple \
             wireguard-apple
 
-      - name: Xcode project information
+      - name: Show environment
         run: |
-          cd wireguard-apple
+          sw_vers
+          uname -m
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-version
+          swift --version
+          go version
 
-          echo "===== XCODE PROJECT ====="
+      - name: Build WireGuard macOS
+        working-directory: wireguard-apple
+        run: |
           xcodebuild \
             -project WireGuard.xcodeproj \
-            -list
+            -scheme WireGuardmacOS \
+            -configuration Release \
+            -sdk macosx \
+            -arch x86_64 \
+            MACOSX_DEPLOYMENT_TARGET=10.14 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
 
-      - name: Inspect deployment targets
+      - name: Build Network Extension
+        working-directory: wireguard-apple
         run: |
-          cd wireguard-apple
+          xcodebuild \
+            -project WireGuard.xcodeproj \
+            -scheme WireGuardNetworkExtensionmacOS \
+            -configuration Release \
+            -sdk macosx \
+            -arch x86_64 \
+            MACOSX_DEPLOYMENT_TARGET=10.14 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
 
-          echo "===== DEPLOYMENT TARGETS ====="
-
-          grep -R \
-            "MACOSX_DEPLOYMENT_TARGET" \
-            WireGuard.xcodeproj/project.pbxproj \
-            || true
-
-      - name: Inspect native targets
+      - name: Build Go Bridge
+        working-directory: wireguard-apple
         run: |
-          cd wireguard-apple
-
-          echo "===== TARGETS ====="
-
-          grep -n \
-            'PBXNativeTarget' \
-            WireGuard.xcodeproj/project.pbxproj \
-            || true
-
-      - name: Inspect Go bridge
-        run: |
-          cd wireguard-apple
-
-          echo "===== GO BRIDGE FILES ====="
-
-          find . \
-            -iname '*go*bridge*' \
-            -o -iname '*wireguard-go*' \
-            | sort
-
-      - name: Inspect WireGuardKit
-        run: |
-          cd wireguard-apple
-
-          echo "===== WIREGUARD KIT ====="
-
-          find . \
-            -type f \
-            \( -name '*.swift' -o -name '*.go' -o -name '*.h' -o -name '*.m' \) \
-            | grep -E 'WireGuardKit|WireGuardGo|PacketTunnel' \
-            | head -200
+          xcodebuild \
+            -project WireGuard.xcodeproj \
+            -scheme WireGuardGoBridgemacOS \
+            -configuration Release \
+            -sdk macosx \
+            -arch x86_64 \
+            MACOSX_DEPLOYMENT_TARGET=10.14 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
