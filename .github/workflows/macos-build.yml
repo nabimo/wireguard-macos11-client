@@ -11,21 +11,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show macOS
+      - name: Show environment
         run: |
           sw_vers
           uname -m
-
-      - name: Show Xcode
-        run: |
           xcodebuild -version
-          xcode-select -p
           xcrun --sdk macosx --show-sdk-version
-
-      - name: Show Swift
-        run: |
           swift --version
 
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
       - name: Show Go
-        run: |
-          go version || true
+        run: go version
