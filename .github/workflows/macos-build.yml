@@ -4,20 +4,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  wireguard:
+  inspect:
     runs-on: macos-15-intel
 
     steps:
       - name: Checkout app
         uses: actions/checkout@v4
-
-      - name: Show environment
-        run: |
-          sw_vers
-          uname -m
-          xcodebuild -version
-          xcrun --sdk macosx --show-sdk-version
-          swift --version
 
       - name: Install Go
         uses: actions/setup-go@v5
@@ -30,18 +22,56 @@ jobs:
             https://git.zx2c4.com/wireguard-apple \
             wireguard-apple
 
-      - name: Inspect WireGuard Apple
+      - name: Xcode project information
         run: |
           cd wireguard-apple
-          git describe --tags --always
-          find . -maxdepth 2 -type f | sort | head -100
 
-      - name: Show Xcode projects
-        run: |
-          cd wireguard-apple
-          find . -name "*.xcodeproj" -o -name "*.xcworkspace"
+          echo "===== XCODE PROJECT ====="
+          xcodebuild \
+            -project WireGuard.xcodeproj \
+            -list
 
-      - name: Show package manifests
+      - name: Inspect deployment targets
         run: |
           cd wireguard-apple
-          find . -name "Package.swift" -print
+
+          echo "===== DEPLOYMENT TARGETS ====="
+
+          grep -R \
+            "MACOSX_DEPLOYMENT_TARGET" \
+            WireGuard.xcodeproj/project.pbxproj \
+            || true
+
+      - name: Inspect native targets
+        run: |
+          cd wireguard-apple
+
+          echo "===== TARGETS ====="
+
+          grep -n \
+            'PBXNativeTarget' \
+            WireGuard.xcodeproj/project.pbxproj \
+            || true
+
+      - name: Inspect Go bridge
+        run: |
+          cd wireguard-apple
+
+          echo "===== GO BRIDGE FILES ====="
+
+          find . \
+            -iname '*go*bridge*' \
+            -o -iname '*wireguard-go*' \
+            | sort
+
+      - name: Inspect WireGuardKit
+        run: |
+          cd wireguard-apple
+
+          echo "===== WIREGUARD KIT ====="
+
+          find . \
+            -type f \
+            \( -name '*.swift' -o -name '*.go' -o -name '*.h' -o -name '*.m' \) \
+            | grep -E 'WireGuardKit|WireGuardGo|PacketTunnel' \
+            | head -200
