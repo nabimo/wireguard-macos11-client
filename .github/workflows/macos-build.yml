@@ -21,6 +21,16 @@ jobs:
           git clone --branch 1.0.15-26 --depth 1 \
             https://git.zx2c4.com/wireguard-apple \
             wireguard-apple
+      - name: Create Developer.xcconfig
+        working-directory: wireguard-apple
+        run: |
+          cp Sources/WireGuardApp/Config/Developer.xcconfig.template \
+          Sources/WireGuardApp/Config/Developer.xcconfig
+
+          cat > Sources/WireGuardApp/Config/Developer.xcconfig <<'EOF'
+          DEVELOPMENT_TEAM =
+          CODE_SIGN_IDENTITY =
+          EOF
 
       - name: Inspect xcconfig
         working-directory: wireguard-apple
@@ -51,3 +61,15 @@ jobs:
           grep -ni -C 5 \
             -E "Developer.xcconfig|developer.xcconfig|xcconfig|Xcode|build" \
             README.md || true
+      
+      - name: Inspect Developer.xcconfig
+        working-directory: wireguard-apple
+        run: |
+          echo "===== TEMPLATE ====="
+          cat Sources/WireGuardApp/Config/Developer.xcconfig.template
+
+          echo "===== GENERATED ====="
+          cp Sources/WireGuardApp/Config/Developer.xcconfig.template \
+          Sources/WireGuardApp/Config/Developer.xcconfig
+
+          cat Sources/WireGuardApp/Config/Developer.xcconfig
